@@ -198,7 +198,7 @@ bool conjugate_gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd
     Eigen::VectorXd direc_vec = direc_mat.diagonal();
     Eigen::VectorXd delta_x = direc_vec;
     Eigen::VectorXd xnew = x;
-
+    // xk+1 = xk + alpha * △x
     linesearchfunc(xnew, delta_x, grad);
 
     Eigen::VectorXd grad_new = gradient_func(xnew);
@@ -207,6 +207,7 @@ bool conjugate_gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd
     double beta = grad_new.transpose().dot(grad_new) / grad.transpose().dot(grad);
     // PRP
     // double beta = grad_new.transpose().dot(grad_new - grad) / grad.transpose().dot(grad);
+    // dk+1 = -grad(xk+1) + beta * dk
     Eigen::VectorXd direc_vec_new = -grad_new + beta * direc_vec;
 
     x = xnew;
