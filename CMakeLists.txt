@@ -25,5 +25,13 @@ target_link_libraries(optsolver ${third_party_libs})
 add_executable(example src/example.cc)
 target_link_libraries(example optsolver ${third_party_libs})
 
+add_executable(example1 src/example1.cc)
+target_link_libraries(example1 optsolver ${third_party_libs})
+
+add_executable(example2 src/example2.cc)
+target_link_libraries(example2 optsolver ${third_party_libs})
+
+
+
 
 

@@ -101,7 +101,10 @@ void plot_solution_path(std::vector<Eigen::VectorXd> x_solve_traj,
 
         plt::pause(0.5);
     }
-
+    Eigen::Vector2d x = x_solve_traj.back();
+    std::vector<double> x0({x(0)});
+    std::vector<double> x1({x(1)});
+    plt::plot(x0, x1, "ro");
     xlabel = "Finished, " + xlabel;
     plt::xlabel(xlabel);
     plt::pause(0.5);

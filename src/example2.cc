@@ -5,47 +5,36 @@
 /**
  * @example
  * Objective function.
- * f(x) = (x-v)^T * Q * (x - v)
+ * f(x) = sin(x(0)) * cos(x(1))
  */
 
 // clang-format off
 
 double objective_function(Eigen::Vector2d x) {
-    Eigen::Matrix2d Q;
-    Q << 0.5, 0.0, 
-         0.0, 1.0;
 
-    Eigen::Vector2d v;
-    v << 1.0, 
-         0.0;
-
-    return (x - v).transpose() * Q * (x - v);
+    return std::sin(x(0)) * std::cos(x(1));
 }
 
 Eigen::Vector2d gradient_function(Eigen::Vector2d x) {
     /*
      * shape: num_variable * 1
      */
-    Eigen::Matrix2d Q;
-    Q << 0.5, 0.0, 
-         0.0, 1.0;
-         
-    Eigen::Vector2d v;
-    v << 1.0, 
-         0.0;
+    Eigen::Vector2d grad;
+    grad << std::cos(x(0)) * std::cos(x(1)), 
+            std::sin(x(0)) * (-std::sin(x(1)));
 
-    return Q * (x - v);
+    return grad;
 }
 
 Eigen::Matrix2d hessian_function(Eigen::Vector2d x) {
     /*
      * shape: num_variable * num_variable
      */
-    Eigen::Matrix2d Q;
-    Q << 0.5, 0.0, 
-         0.0, 1.0;
+    Eigen::Matrix2d H;
+    H << -std::sin(x(0)) * std::cos(x(1)), -std::cos(x(0)) * std::sin(x(1)), 
+         std::cos(x(0)) * (-std::sin(x(1))), std::cos(x(0)) * (-std::cos(x(1)));
 
-    return Q;
+    return H;
 }
 
 /**
@@ -96,14 +85,14 @@ Eigen::MatrixXd jacbian_ineq_constraint(Eigen::Vector2d x) {
  * inequality_constraints
  * g(x) <= b
  * equality_constraints
- * h(x) = g
- * =>   h(x) <= g
- * and -h(x) <= -g
+ * h(x) = b
+ * =>   h(x) <= b
+ * and -h(x) <= -b
  *
  * then, all constraints can be expression by
  * g(x) <= b
- * h(x) <= g
- * -h(x)<= g
+ * h(x) <= 0
+ * -h(x)<= 0
  */
 
 Eigen::VectorXd eq_ineq_constraints(Eigen::Vector2d x) {
@@ -156,7 +145,7 @@ void unconstraint_test() {
 
     OptSolver::UnconstraintSolver solver(opts);
     Eigen::Vector2d x0;
-    x0 << -4, 2;
+    x0 << -2, 1;
     solver.Initialize(x0);
     solver.Solve();
 
@@ -194,13 +183,8 @@ void constraint_test_augmented_lagrangian() {
 
     OptSolver::ConstraintSolver solver(opts);
     Eigen::Vector2d x0;
-    x0 << 2, -2;
-    // x0 << -3, 2;
-    // x0 << 3, 3;
-    x0 << -1, 4;
-    // x0 << 0.5, 0.0;
-    // x0 << 1.0, 0.0;
 
+    x0 << 2, 0;
     solver.Initialize(x0);
     solver.Solve();
 
@@ -233,12 +217,8 @@ void constraint_test_interior() {
 
     OptSolver::ConstraintSolver solver(opts);
     Eigen::Vector2d x0;
-    x0 << 2, -2;
-    // x0 << -3, 2;
-    // x0 << 3, 3;
-    x0 << -1, 4;
-    // x0 << 0.5, 0.0;
-    // x0 << 1.0, 0.0;
+
+    x0 << 2, 0;
 
     solver.Initialize(x0);
     solver.Solve();
@@ -269,7 +249,8 @@ void constraint_test_kkt_system_solver() {
 
     OptSolver::ConstraintSolver solver(opts);
     Eigen::Vector2d x0;
-    x0 << -1, 4;
+
+    x0 << -1, 3;
  
     solver.Initialize(x0);
     solver.Solve();
@@ -279,10 +260,14 @@ void constraint_test_kkt_system_solver() {
     plt::clf();
 }
 
+// clang-format on
 int main() {
+
     unconstraint_test();
     constraint_test_augmented_lagrangian();
     constraint_test_interior();
     constraint_test_kkt_system_solver();
+    plt::show();
+    plt::close();
     return 0;
 }

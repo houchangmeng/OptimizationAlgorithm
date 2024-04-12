@@ -280,6 +280,7 @@ bool augmentedLagrangian_step_with_linesearch(Eigen::VectorXd& x, Eigen::MatrixX
         if (iter_count > 1000) {
             break;
         }
+
         iter_count++;
     }
 
@@ -423,7 +424,7 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
     kkt_lhs_mat.block(num_vars + num_slack, 0, num_lambda, num_vars) = jac_cons_value;
     kkt_lhs_mat.block(num_vars + num_slack, num_vars, num_lambda, num_lambda) = cons_eye;
 
-    // Eigen::LDLT<Eigen::MatrixXd> ldlt;
+    // Eigen::LDLT<Eigen::MatrixXd> ldlt; SVD is more stable.
     Eigen::BDCSVD<Eigen::MatrixXd, Eigen::ComputeThinU | Eigen::ComputeThinV> ldlt;
     ldlt.compute(kkt_lhs_mat);
 
@@ -440,7 +441,7 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
     sigma =
         (slack_vec + alpha * delta_slack_aff).dot(lambda_vec + alpha * delta_lambda_aff) / dual_gap;
     sigma = std::pow(sigma, 3);
-  
+
     Eigen::VectorXd mu_vec = Eigen::VectorXd::Ones(num_slack) * mu * sigma;
 
     Eigen::VectorXd center_rhs_vec;
@@ -450,7 +451,7 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
 
     Eigen::VectorXd delta_cc = ldlt.solve(center_rhs_vec);
 
-    Eigen::VectorXd delta = delta_aff;  // + delta_cc;
+    Eigen::VectorXd delta = delta_aff + delta_cc;
     Eigen::MatrixXd delta_x = delta.block(0, 0, num_vars, 1);
     Eigen::MatrixXd delta_slack = delta.block(num_vars, 0, num_slack, 1);
     Eigen::VectorXd delta_lambda = delta.block(num_vars + num_slack, 0, num_slack, 1);
@@ -483,6 +484,8 @@ bool kkt_newton_step(Eigen::VectorXd& x, Eigen::MatrixXd& lambda, Eigen::MatrixX
 
     int num_vars = x.size();
     int num_cons = lambda_vec.size();
+
+    // Build KKT System.
 
     Eigen::VectorXd kkt_rhs;
     kkt_rhs.setZero(num_vars + num_cons);

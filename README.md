@@ -1,24 +1,81 @@
 # OptimizationAlgorithm
 
 The most common optimization algorithm, implemented by Eigen.
+___
 
 ## Requirement
 
 python: matplotlib  
 c++: Eigen
+___
 
-## Run
+### Clone and bulid
 
 ```{bash}
 git clone git@github.com:houchangmeng/OptimizationAlgorithm.git
 cd OptimizationAlgorithm/
 build.bash
-./bin/example 
 ```
 
-## Example
+### Run examples
+
+```{bash}
+./bin/example 
+./bin/example1
+./bin/example2
+```
+
+___
+
+## Examples
+
+### Remark
+>
+> Equality constraints can be written as inequality constraints.
+
+$$
+\begin{aligned}
+h(\mathbf{x}) = \mathbf{g} \\
+\rArr \qquad \qquad \quad \mathbf{g} \leq h(\mathbf{x}) \leq \mathbf{g} \\
+\rArr h(\mathbf{x})  \leq \mathbf{g}, \quad -h(\mathbf{x}) \leq -\mathbf{g}
+\end{aligned}
+$$
+___
+
+#### example.cc
+
+$$
+\begin{aligned}
+    \textnormal{min} \qquad f(\mathbf{x})= (\mathbf{x-v}^{T})\mathbf{Q} (\mathbf{x-v}) \\
+    \textnormal{s.t.} \qquad \mathbf{Gx} \leq \mathbf{b}
+\end{aligned}
+$$
 
 ![example](example.gif)
+___
+
+#### example1.cc
+
+$$
+\begin{aligned}
+    \textnormal{min} \qquad f(\mathbf{x})= \mathbf{x}[0] * \mathbf{x}[1] \\
+    \textnormal{s.t.} \qquad \mathbf{Gx} \leq \mathbf{b} \\
+\end{aligned}
+$$
+
+![example](example1.gif)
+___
+
+#### example2.cc
+
+$$
+\begin{aligned}
+    \textnormal{min} \qquad f(\mathbf{x})= \sin{(\mathbf{x}[0])} * \cos{((\mathbf{x}[1]))} \\
+    \textnormal{s.t.} \qquad \mathbf{Gx} \leq \mathbf{b} \\
+\end{aligned}
+$$
+
+![example](example2.gif)
 
 ## Reference
 
