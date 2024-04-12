@@ -110,26 +110,26 @@ bool UnconstraintSolver::Solve() {
 UnconstraintSolver::~UnconstraintSolver() {}
 
 bool gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad, Eigen::MatrixXd& hess,
-                                   LineSearchFunction linesearchfunc,
+                                   LineSearchFunction linesearch_func,
                                    GradientFunction gradient_func, HessianFunction hessian_func) {
     if (grad.norm() < 0.01) {
         return true;
     }
     Eigen::VectorXd delta_x = -grad;
-    linesearchfunc(x, delta_x, grad);
+    linesearch_func(x, delta_x, grad);
     grad = gradient_func(x);
     return false;
 }
 
 bool gauss_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad,
-                                       Eigen::MatrixXd& hess, LineSearchFunction linesearchfunc,
+                                       Eigen::MatrixXd& hess, LineSearchFunction linesearch_func,
                                        GradientFunction gradient_func,
                                        HessianFunction hessian_func) {
     if (grad.norm() < 0.01) {
         return true;
     }
     Eigen::VectorXd delta_x = -hess.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
-    linesearchfunc(x, delta_x, grad);
+    linesearch_func(x, delta_x, grad);
 
     grad = gradient_func(x);
     hess = hessian_func(x);
@@ -138,7 +138,7 @@ bool gauss_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad
 }
 
 bool bfgs_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad, Eigen::MatrixXd& B,
-                                      LineSearchFunction linesearchfunc,
+                                      LineSearchFunction linesearch_func,
                                       GradientFunction gradient_func,
                                       HessianFunction hessian_func) {
     if (grad.norm() < 0.01) {
@@ -146,7 +146,7 @@ bool bfgs_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad,
     }
     Eigen::VectorXd delta_x = -B.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
     auto delta_xt = delta_x.transpose();
-    // linesearchfunc(x, delta_x, grad);
+    // linesearch_func(x, delta_x, grad);
     Eigen::VectorXd xnew = x + delta_x;
 
     Eigen::VectorXd grad_new = gradient_func(x);
@@ -164,13 +164,13 @@ bool bfgs_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad,
 }
 
 bool dfp_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad, Eigen::MatrixXd& G,
-                                     LineSearchFunction linesearchfunc,
+                                     LineSearchFunction linesearch_func,
                                      GradientFunction gradient_func, HessianFunction hessian_func) {
     if (grad.norm() < 0.01) {
         return true;
     }
     Eigen::VectorXd delta_x = -G.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
-    // linesearchfunc(x, delta_x, grad);
+    // linesearch_func(x, delta_x, grad);
     auto delta_xt = delta_x.transpose();
     Eigen::VectorXd xnew = x + delta_x;
     Eigen::VectorXd grad_new = gradient_func(xnew);
@@ -189,7 +189,7 @@ bool dfp_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad, 
 
 bool conjugate_gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad,
                                              Eigen::MatrixXd& direc_mat,
-                                             LineSearchFunction linesearchfunc,
+                                             LineSearchFunction linesearch_func,
                                              GradientFunction gradient_func,
                                              HessianFunction hessian_func) {
     if (grad.norm() < 0.01) {
@@ -199,7 +199,7 @@ bool conjugate_gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd
     Eigen::VectorXd delta_x = direc_vec;
     Eigen::VectorXd xnew = x;
     // xk+1 = xk + alpha * △x
-    linesearchfunc(xnew, delta_x, grad);
+    linesearch_func(xnew, delta_x, grad);
 
     Eigen::VectorXd grad_new = gradient_func(xnew);
 
