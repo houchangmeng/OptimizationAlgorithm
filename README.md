@@ -2,6 +2,11 @@
 
 The most common optimization algorithm, implemented by Eigen.
 
+## Requirement
+
+python: matplotlib  
+c++: Eigen
+
 ## Run
 
 ```{bash}
