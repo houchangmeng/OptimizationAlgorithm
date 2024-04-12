@@ -309,7 +309,7 @@ bool primal_dual_interior_step(Eigen::VectorXd& x, Eigen::MatrixXd& lambda_mat,
 
     double dual_gap = slack_vec.dot(lambda_vec);
 
-    if (std::abs(dual_gap) < 0.01) {
+    if (std::abs(dual_gap) < 0.001) {
         return true;
     }
 
@@ -396,7 +396,7 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
 
     double dual_gap = slack_vec.dot(lambda_vec);
 
-    if (std::abs(dual_gap) < 0.01) {
+    if (std::abs(dual_gap) < 0.001) {
         return true;
     }
 
