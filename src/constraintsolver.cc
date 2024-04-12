@@ -437,10 +437,10 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
     Eigen::VectorXd delta_lambda_aff = delta_aff.block(num_vars + num_slack, 0, num_slack, 1);
     alpha = std::min(linesearch_func(slack_vec, delta_slack_aff),
                      linesearch_func(lambda_vec, delta_lambda_aff));
-
     sigma =
         (slack_vec + alpha * delta_slack_aff).dot(lambda_vec + alpha * delta_lambda_aff) / dual_gap;
-
+    sigma = std::pow(sigma, 3);
+  
     Eigen::VectorXd mu_vec = Eigen::VectorXd::Ones(num_slack) * mu * sigma;
 
     Eigen::VectorXd center_rhs_vec;
