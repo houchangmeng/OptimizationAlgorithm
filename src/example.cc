@@ -149,7 +149,7 @@ void unconstraint_test() {
     opts.max_iternum_ = 1000;
     opts.stop_grad_norm_ = 0.01;
 
-    opts.solvertype_ = OptSolver::UnconstraintSolver::SolverType::QuasiNewton_BFGS;
+    opts.solvertype_ = OptSolver::UnconstraintSolver::SolverType::ConjugateGradient;
     opts.grad_func_ = gradient_function;
     opts.hess_func_ = hessian_function;
     opts.obj_func_ = objective_function;
@@ -160,7 +160,7 @@ void unconstraint_test() {
     solver.Initialize(x0);
     solver.Solve();
 
-    plot_solution_path(solver.get_solution_trajectory(), objective_function,"UnconstraintSolver");
+    plot_solution_path(solver.get_solution_trajectory(), objective_function,"ConjugateGradient");
     plt::pause(1.0);
     plt::clf();
 }
