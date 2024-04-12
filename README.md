@@ -24,7 +24,22 @@ build.bash
 ./bin/example1
 ./bin/example2
 ```
+___
 
+## Algorithm
+
+### Unconstraint
+
+ * GradientDescend
+ * GaussNewton
+ * QuasiNewton_BFGS
+ * QuasiNewton_DFP
+ * ConjugateGradient
+   
+### Constraint
+
+ * AugmentedLagrangian
+ * InteriorPoint
 ___
 
 ## Examples
@@ -36,8 +51,8 @@ ___
 $$
 \begin{aligned}
 h(\mathbf{x}) = \mathbf{g} \\
-\rArr \qquad \qquad \quad \mathbf{g} \leq h(\mathbf{x}) \leq \mathbf{g} \\
-\rArr h(\mathbf{x})  \leq \mathbf{g}, \quad -h(\mathbf{x}) \leq -\mathbf{g}
+\rightarrow \qquad \qquad \quad \mathbf{g} \leq h(\mathbf{x}) \leq \mathbf{g} \\
+\rightarrow h(\mathbf{x})  \leq \mathbf{g}, \quad -h(\mathbf{x}) \leq -\mathbf{g}
 \end{aligned}
 $$
 ___
