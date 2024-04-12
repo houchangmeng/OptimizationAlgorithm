@@ -309,14 +309,23 @@ bool primal_dual_interior_step(Eigen::VectorXd& x, Eigen::MatrixXd& lambda_mat,
 
     double dual_gap = slack_vec.dot(lambda_vec);
 
-    if (std::abs(dual_gap) < 0.1) {
+    if (std::abs(dual_gap) < 0.01) {
         return true;
     }
 
-    Eigen::MatrixXd cons_eye;
-    cons_eye.setIdentity(num_lambda, num_lambda);
-
     // Build KKT System.
+
+    Eigen::VectorXd kkt_rhs_vec;
+    kkt_rhs_vec.setZero(num_vars + num_slack + num_lambda);
+    kkt_rhs_vec.block(0, 0, num_vars, 1) = -grad_objfunc_value - jac_cons_transpose * lambda_vec;
+    kkt_rhs_vec.block(num_vars, 0, num_slack, 1) = -slack_mat * lambda_vec;
+    kkt_rhs_vec.block(num_vars + num_slack, 0, num_lambda, 1) = -cons_value - slack_vec;
+
+    if (kkt_rhs_vec.norm() < 0.01) {
+        return true;
+    }
+
+    Eigen::MatrixXd cons_eye = Eigen::MatrixXd::Identity(num_lambda, num_lambda);
 
     Eigen::MatrixXd kkt_lhs_mat;
     kkt_lhs_mat.setZero(num_vars + num_slack + num_lambda, num_vars + num_slack + num_lambda);
@@ -326,12 +335,6 @@ bool primal_dual_interior_step(Eigen::VectorXd& x, Eigen::MatrixXd& lambda_mat,
     kkt_lhs_mat.block(num_vars, num_vars + num_slack, num_slack, num_slack) = slack_mat;
     kkt_lhs_mat.block(num_vars + num_slack, 0, num_lambda, num_vars) = jac_cons_value;
     kkt_lhs_mat.block(num_vars + num_slack, num_vars, num_lambda, num_lambda) = cons_eye;
-
-    Eigen::VectorXd kkt_rhs_vec;
-    kkt_rhs_vec.setZero(num_vars + num_slack + num_lambda);
-    kkt_rhs_vec.block(0, 0, num_vars, 1) = -grad_objfunc_value - jac_cons_transpose * lambda_vec;
-    kkt_rhs_vec.block(num_vars, 0, num_slack, 1) = -slack_mat * lambda_vec;
-    kkt_rhs_vec.block(num_vars + num_slack, 0, num_lambda, 1) = -cons_value - slack_vec;
 
     Eigen::BDCSVD<Eigen::MatrixXd, Eigen::ComputeThinU | Eigen::ComputeThinV> kktSVD;
     kktSVD.compute(kkt_lhs_mat);
@@ -393,14 +396,23 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
 
     double dual_gap = slack_vec.dot(lambda_vec);
 
-    if (std::abs(dual_gap) < 0.1) {
+    if (std::abs(dual_gap) < 0.01) {
         return true;
     }
 
-    Eigen::MatrixXd cons_eye;
-    cons_eye.setIdentity(num_lambda, num_lambda);
-
     // Build KKT System. Origin KKT matrix is unstable,
+
+    Eigen::VectorXd kkt_rhs_vec;
+    kkt_rhs_vec.setZero(num_vars + num_slack + num_lambda);
+    kkt_rhs_vec.block(0, 0, num_vars, 1) = -grad_objfunc_value - jac_cons_transpose * lambda_vec;
+    kkt_rhs_vec.block(num_vars, 0, num_slack, 1) = -lambda_vec;  // modify
+    kkt_rhs_vec.block(num_vars + num_slack, 0, num_lambda, 1) = -cons_value - slack_vec;
+
+    if (kkt_rhs_vec.norm() < 0.01) {
+        return true;
+    }
+
+    Eigen::MatrixXd cons_eye = Eigen::MatrixXd::Identity(num_lambda, num_lambda);
 
     Eigen::MatrixXd kkt_lhs_mat;
     kkt_lhs_mat.setZero(num_vars + num_slack + num_lambda, num_vars + num_slack + num_lambda);
@@ -411,14 +423,9 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
     kkt_lhs_mat.block(num_vars + num_slack, 0, num_lambda, num_vars) = jac_cons_value;
     kkt_lhs_mat.block(num_vars + num_slack, num_vars, num_lambda, num_lambda) = cons_eye;
 
-    Eigen::LDLT<Eigen::MatrixXd> ldlt;
-    // Eigen::BDCSVD<Eigen::MatrixXd, Eigen::ComputeThinU | Eigen::ComputeThinV> ldlt;
+    // Eigen::LDLT<Eigen::MatrixXd> ldlt;
+    Eigen::BDCSVD<Eigen::MatrixXd, Eigen::ComputeThinU | Eigen::ComputeThinV> ldlt;
     ldlt.compute(kkt_lhs_mat);
-    Eigen::VectorXd kkt_rhs_vec;
-    kkt_rhs_vec.setZero(num_vars + num_slack + num_lambda);
-    kkt_rhs_vec.block(0, 0, num_vars, 1) = -grad_objfunc_value - jac_cons_transpose * lambda_vec;
-    kkt_rhs_vec.block(num_vars, 0, num_slack, 1) = -lambda_vec;  // modify
-    kkt_rhs_vec.block(num_vars + num_slack, 0, num_lambda, 1) = -cons_value - slack_vec;
 
     // affine delta solve
     Eigen::VectorXd delta_aff = ldlt.solve(kkt_rhs_vec);
