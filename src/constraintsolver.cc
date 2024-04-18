@@ -6,7 +6,7 @@ ConstraintSolver::ConstraintSolver(ObjectiveFunction obj_func, GradientFunction 
                                    HessianFunction hess_func, ConstraintsFunction cons_func,
                                    JacbianConstraintsFunction jac_cons_func)
     : obj_func_(obj_func),
-      grad_func_(grad_func_),
+      grad_func_(grad_func),
       hess_func_(hess_func),
       cons_func_(cons_func),
       jac_cons_func_(jac_cons_func) {
