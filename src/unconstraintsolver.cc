@@ -58,10 +58,11 @@ void UnconstraintSolver::Initialize(Eigen::VectorXd x0) {
                                    grad_func_, hess_func_);
             break;
         case SolverType::ConjugateGradient:
+            hess0_ = cg_direc_mat0_;
             iter_func_ = std::bind(conjugate_gradient_step_with_linesearch, std::placeholders::_1,
                                    std::placeholders::_2, std::placeholders::_3, linesearch_func_,
                                    grad_func_, hess_func_);
-            hess0_ = cg_direc_mat0_;
+
             break;
 
         default:
@@ -146,8 +147,8 @@ bool bfgs_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad,
     }
     Eigen::VectorXd delta_x = -B.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
     auto delta_xt = delta_x.transpose();
-    // linesearch_func(x, delta_x, grad);
-    Eigen::VectorXd xnew = x + delta_x;
+    Eigen::VectorXd xnew = x;
+    linesearch_func(xnew, delta_x, grad);
 
     Eigen::VectorXd grad_new = gradient_func(x);
 
@@ -170,9 +171,10 @@ bool dfp_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad, 
         return true;
     }
     Eigen::VectorXd delta_x = -G.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
-    // linesearch_func(x, delta_x, grad);
     auto delta_xt = delta_x.transpose();
-    Eigen::VectorXd xnew = x + delta_x;
+    Eigen::VectorXd xnew = x;
+    linesearch_func(xnew, delta_x, grad);
+
     Eigen::VectorXd grad_new = gradient_func(xnew);
 
     Eigen::VectorXd delta_y = grad_new - grad;
@@ -198,7 +200,7 @@ bool conjugate_gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd
     Eigen::VectorXd direc_vec = direc_mat.diagonal();
     Eigen::VectorXd delta_x = direc_vec;
     Eigen::VectorXd xnew = x;
-    // xk+1 = xk + alpha * △x
+    // xk+1 = xk + alpha* deltax
     linesearch_func(xnew, delta_x, grad);
 
     Eigen::VectorXd grad_new = gradient_func(xnew);
@@ -207,7 +209,6 @@ bool conjugate_gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd
     double beta = grad_new.transpose().dot(grad_new) / grad.transpose().dot(grad);
     // PRP
     // double beta = grad_new.transpose().dot(grad_new - grad) / grad.transpose().dot(grad);
-    // dk+1 = -grad(xk+1) + beta * dk
     Eigen::VectorXd direc_vec_new = -grad_new + beta * direc_vec;
 
     x = xnew;
