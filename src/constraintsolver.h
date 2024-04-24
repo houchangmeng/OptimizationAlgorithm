@@ -32,7 +32,7 @@ class ConstraintSolver {
 
     struct Options {
         int max_iternum_ = 1000;
-        double stop_grad_norm_ = 0.01;
+        double stop_x_norm_ = 0.001;
         SolverType solvertype_ = SolverType::AugmentedLagrangian;
         ObjectiveFunction obj_func_ = nullptr;
         GradientFunction grad_func_ = nullptr;

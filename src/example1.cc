@@ -171,7 +171,7 @@ void constraint_test_augmented_lagrangian() {
     
     OptSolver::ConstraintSolver::Options opts;
     opts.max_iternum_ = 1000;
-    opts.stop_grad_norm_ = 0.01;
+    opts.stop_x_norm_ = 0.01;
 
     opts.solvertype_ = OptSolver::ConstraintSolver::SolverType::AugmentedLagrangian;
     opts.grad_func_ = gradient_function;
@@ -207,7 +207,7 @@ void constraint_test_interior() {
 
     OptSolver::ConstraintSolver::Options opts;
     opts.max_iternum_ = 1000;
-    opts.stop_grad_norm_ = 0.01;
+    opts.stop_x_norm_ = 0.001;
 
     opts.solvertype_ = OptSolver::ConstraintSolver::SolverType::InteriorPoint;
     opts.grad_func_ = gradient_function;
@@ -244,7 +244,7 @@ void constraint_test_kkt_system_solver() {
     
     OptSolver::ConstraintSolver::Options opts;
     opts.max_iternum_ = 1000;
-    opts.stop_grad_norm_ = 0.01;
+    opts.stop_x_norm_ = 0.01;
 
     opts.solvertype_ = OptSolver::ConstraintSolver::SolverType::KKTSystemSolver;
     opts.grad_func_ = gradient_function;
@@ -270,7 +270,6 @@ void constraint_test_kkt_system_solver() {
 // clang-format on
 int main() {
     // unconstraint_test();
-
     constraint_test_augmented_lagrangian();
     constraint_test_interior();
     constraint_test_kkt_system_solver();

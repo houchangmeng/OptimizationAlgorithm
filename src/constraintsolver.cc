@@ -108,6 +108,11 @@ bool ConstraintSolver::Solve() {
         if (iter_func_(x0_, lambda0_, rho0_)) {
             break;
         };
+
+        if ((x0_ - x_solution_traj_.back()).norm() < options_.stop_x_norm_) {
+            break;
+        };
+
         if (step > options_.max_iternum_) {
             printf("\033[31mSolver has reached maximum iterate step.\033[0m\n");
             return false;
@@ -143,9 +148,10 @@ bool augmentedLagrangian_step(Eigen::VectorXd& x, Eigen::MatrixXd& lambda, Eigen
     // allocate memory
     Eigen::VectorXd cons_value = constraints_func(x);
 
-    if (cons_value.maxCoeff() < 0.01) {
-        return true;
-    }
+    // if (cons_value.maxCoeff() < 0.01) {
+    //     return true;
+    // }
+
     Eigen::VectorXd penalty_value = cons_value;
     penalty_value.setZero();
     Eigen::MatrixXd jac_cons_value = jac_constraints_func(x);
@@ -173,7 +179,7 @@ bool augmentedLagrangian_step(Eigen::VectorXd& x, Eigen::MatrixXd& lambda, Eigen
         jac_cons_value = jac_constraints_func(x);
 
         for (int i = 0; i < num_cons; i++) {
-            if (cons_value(i) < 0) {
+            if (cons_value(i) <= 0.0) {
                 jac_cons_value.row(i).setZero();
             }
         }
@@ -212,9 +218,10 @@ bool augmentedLagrangian_step_with_linesearch(Eigen::VectorXd& x, Eigen::MatrixX
     // allocate memory
     Eigen::VectorXd cons_value = constraints_func(x);
 
-    if (cons_value.maxCoeff() < 0.01) {
-        return true;
-    }
+    // if (cons_value.maxCoeff() < 0.01) {
+    //     return true;
+    // }
+
     Eigen::VectorXd penalty_value = cons_value;
     penalty_value.setZero();
     Eigen::MatrixXd jac_cons_value = jac_constraints_func(x);
@@ -409,7 +416,7 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
     kkt_rhs_vec.block(num_vars, 0, num_slack, 1) = -lambda_vec;  // modify
     kkt_rhs_vec.block(num_vars + num_slack, 0, num_lambda, 1) = -cons_value - slack_vec;
 
-    if (kkt_rhs_vec.norm() < 0.01) {
+    if (kkt_rhs_vec.norm() < 0.001) {
         return true;
     }
 
@@ -440,7 +447,7 @@ bool primal_dual_interior_step_with_linesearch(Eigen::VectorXd& x, Eigen::Matrix
                      linesearch_func(lambda_vec, delta_lambda_aff));
     sigma =
         (slack_vec + alpha * delta_slack_aff).dot(lambda_vec + alpha * delta_lambda_aff) / dual_gap;
-    sigma = std::pow(sigma, 3);
+    sigma = std::max(std::pow(sigma, 3), 0.8);
 
     Eigen::VectorXd mu_vec = Eigen::VectorXd::Ones(num_slack) * mu * sigma;
 
@@ -492,7 +499,7 @@ bool kkt_newton_step(Eigen::VectorXd& x, Eigen::MatrixXd& lambda, Eigen::MatrixX
     kkt_rhs.head(num_vars) = -gradient_value - jac_value_transpose * lambda_vec;
     kkt_rhs.tail(num_cons) = -constraint_value;
 
-    if (kkt_rhs.norm() < 0.01) {
+    if (kkt_rhs.norm() < 0.001) {
         return true;
     }
 

@@ -1,7 +1,7 @@
+#include <cxxabi.h>
 #include "constraintsolver.h"
 #include "unconstraintsolver.h"
 #include "utils.h"
-
 /**
  * @example
  * Objective function.
@@ -19,7 +19,7 @@ double objective_function(Eigen::Vector2d x) {
     v << 1.0, 
          0.0;
 
-    return (x - v).transpose() * Q * (x - v);
+    return (x - v).transpose() *(x - v);
 }
 
 Eigen::Vector2d gradient_function(Eigen::Vector2d x) {
@@ -41,11 +41,11 @@ Eigen::Matrix2d hessian_function(Eigen::Vector2d x) {
     /*
      * shape: num_variable * num_variable
      */
-    Eigen::Matrix2d Q;
-    Q << 0.5, 0.0, 
+    Eigen::Matrix2d H;
+    H << 0.5, 0.0, 
          0.0, 1.0;
 
-    return Q;
+    return H;
 }
 
 /**
@@ -96,14 +96,14 @@ Eigen::MatrixXd jacbian_ineq_constraint(Eigen::Vector2d x) {
  * inequality_constraints
  * g(x) <= b
  * equality_constraints
- * h(x) = g
- * =>   h(x) <= g
- * and -h(x) <= -g
+ * h(x) = b
+ * =>   h(x) <= b
+ * and -h(x) <= -b
  *
  * then, all constraints can be expression by
  * g(x) <= b
- * h(x) <= g
- * -h(x)<= g
+ * h(x) <= 0
+ * -h(x)<= 0
  */
 
 Eigen::VectorXd eq_ineq_constraints(Eigen::Vector2d x) {
@@ -149,7 +149,7 @@ void unconstraint_test() {
     opts.max_iternum_ = 1000;
     opts.stop_grad_norm_ = 0.01;
 
-    opts.solvertype_ = OptSolver::UnconstraintSolver::SolverType::ConjugateGradient;
+    opts.solvertype_ = OptSolver::UnconstraintSolver::SolverType::QuasiNewton_BFGS;
     opts.grad_func_ = gradient_function;
     opts.hess_func_ = hessian_function;
     opts.obj_func_ = objective_function;
@@ -160,7 +160,7 @@ void unconstraint_test() {
     solver.Initialize(x0);
     solver.Solve();
 
-    plot_solution_path(solver.get_solution_trajectory(), objective_function,"ConjugateGradient");
+    plot_solution_path(solver.get_solution_trajectory(), objective_function,"QuasiNewton_BFGS");
     plt::pause(1.0);
     plt::clf();
 }
@@ -182,7 +182,7 @@ void constraint_test_augmented_lagrangian() {
     
     OptSolver::ConstraintSolver::Options opts;
     opts.max_iternum_ = 1000;
-    opts.stop_grad_norm_ = 0.01;
+    opts.stop_x_norm_ = 0.001;
 
     opts.solvertype_ = OptSolver::ConstraintSolver::SolverType::AugmentedLagrangian;
     opts.grad_func_ = gradient_function;
@@ -191,6 +191,9 @@ void constraint_test_augmented_lagrangian() {
 
     opts.cons_func_ = eq_ineq_constraints;
     opts.jac_cons_func_ = jacbian_eq_ineq_constraints;
+
+    // opts.cons_func_ = equality_constraint;
+    // opts.jac_cons_func_ = jacbian_eq_constraint;
 
     OptSolver::ConstraintSolver solver(opts);
     Eigen::Vector2d x0;
@@ -219,7 +222,7 @@ void constraint_test_interior() {
 
     OptSolver::ConstraintSolver::Options opts;
     opts.max_iternum_ = 1000;
-    opts.stop_grad_norm_ = 0.01;
+    opts.stop_x_norm_ = 0.001;
 
     opts.solvertype_ = OptSolver::ConstraintSolver::SolverType::InteriorPoint;
     opts.grad_func_ = gradient_function;
@@ -256,7 +259,7 @@ void constraint_test_kkt_system_solver() {
     
     OptSolver::ConstraintSolver::Options opts;
     opts.max_iternum_ = 1000;
-    opts.stop_grad_norm_ = 0.01;
+    opts.stop_x_norm_ = 0.01;
 
     opts.solvertype_ = OptSolver::ConstraintSolver::SolverType::KKTSystemSolver;
     opts.grad_func_ = gradient_function;
@@ -280,9 +283,11 @@ void constraint_test_kkt_system_solver() {
 }
 
 int main() {
+    
     unconstraint_test();
     constraint_test_augmented_lagrangian();
     constraint_test_interior();
     constraint_test_kkt_system_solver();
+    plt::show();
     return 0;
 }

@@ -94,6 +94,11 @@ bool UnconstraintSolver::Solve() {
         if (iter_func_(x0_, grad0_, hess0_)) {
             break;
         };
+
+        if (grad0_.norm() < options_.stop_grad_norm_) {
+            break;
+        };
+
         if (step > options_.max_iternum_) {
             printf("\033[31mSolver has reached maximum iterate step.\033[0m\n");
             return false;
@@ -126,7 +131,7 @@ bool gauss_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad
                                        Eigen::MatrixXd& hess, LineSearchFunction linesearch_func,
                                        GradientFunction gradient_func,
                                        HessianFunction hessian_func) {
-    if (grad.norm() < 0.01) {
+    if (grad.norm() < 0.001) {
         return true;
     }
     Eigen::VectorXd delta_x = -hess.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
@@ -142,7 +147,7 @@ bool bfgs_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad,
                                       LineSearchFunction linesearch_func,
                                       GradientFunction gradient_func,
                                       HessianFunction hessian_func) {
-    if (grad.norm() < 0.01) {
+    if (grad.norm() < 0.001) {
         return true;
     }
     Eigen::VectorXd delta_x = -B.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
@@ -167,7 +172,7 @@ bool bfgs_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad,
 bool dfp_newton_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd& grad, Eigen::MatrixXd& G,
                                      LineSearchFunction linesearch_func,
                                      GradientFunction gradient_func, HessianFunction hessian_func) {
-    if (grad.norm() < 0.01) {
+    if (grad.norm() < 0.001) {
         return true;
     }
     Eigen::VectorXd delta_x = -G.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(grad);
@@ -194,7 +199,7 @@ bool conjugate_gradient_step_with_linesearch(Eigen::VectorXd& x, Eigen::VectorXd
                                              LineSearchFunction linesearch_func,
                                              GradientFunction gradient_func,
                                              HessianFunction hessian_func) {
-    if (grad.norm() < 0.01) {
+    if (grad.norm() < 0.001) {
         return true;
     }
     Eigen::VectorXd direc_vec = direc_mat.diagonal();
