@@ -24,22 +24,24 @@ build.bash
 ./bin/example1
 ./bin/example2
 ```
+
 ___
 
 ## Algorithm
 
 ### Unconstraint
 
- * GradientDescend
- * GaussNewton
- * QuasiNewton_BFGS
- * QuasiNewton_DFP
- * ConjugateGradient
-   
+* GradientDescend
+* GaussNewton
+* QuasiNewton_BFGS
+* QuasiNewton_DFP
+* ConjugateGradient
+
 ### Constraint
 
- * AugmentedLagrangian
- * InteriorPoint
+* AugmentedLagrangian
+* InteriorPoint
+
 ___
 
 ## Examples
@@ -99,3 +101,5 @@ $$
 [Convex Optimization](https://web.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf)
 
 [CMU 16 745](https://github.com/Optimal-Control-16-745/)
+
+[autodiff](https://github.com/autodiff/autodiff)

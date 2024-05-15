@@ -20,43 +20,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <cxxabi.h>
 #include "constraintsolver.h"
+#include "mat.hpp"
 #include "unconstraintsolver.h"
 #include "utils.h"
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////autodiff intergration /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 /**
  * @example
  * Objective function.
- * f(x) = x(0) * x(1)
+ * f(x) = (x-v)^T * Q * (x - v)
  */
 
 // clang-format off
 
-double objective_function(Eigen::Vector2d x) {
+// autodiff::var objective_function(autodiff::Vector2var x) {
+//     Eigen::Matrix2d Q;
+//     Q << 0.5, 0.0, 
+//          0.0, 1.0;
 
-    return x(0) * x(1);
+//     Eigen::Vector2d v;
+//     v << 1.0, 
+//          0.0;
+
+//     return (x - v).transpose() *(x - v)  ;
+// }
+
+autodiff::var objective_function(autodiff::Vector2var x) {
+
+    return sin(x(0)) * cos(x(1));
 }
 
-Eigen::Vector2d gradient_function(Eigen::Vector2d x) {
+Eigen::Vector2d gradient_function(autodiff::Vector2var x) {
     /*
      * shape: num_variable * 1
      */
-    Eigen::Vector2d grad;
-    grad << x(1), 
-            x(0);
-
-    return grad;
+    autodiff::var y = objective_function(x);
+    return autodiff::gradient(y, x);
 }
 
-Eigen::Matrix2d hessian_function(Eigen::Vector2d x) {
+Eigen::Matrix2d hessian_function(autodiff::Vector2var x) {
     /*
      * shape: num_variable * num_variable
      */
-    Eigen::Matrix2d H;
-    H << 0.0, 1.0, 
-         1.0, 0.0;
-
-    return H;
+    autodiff::var y = objective_function(x);
+    return autodiff::hessian(y, x);
 }
 
 /**
@@ -64,19 +76,20 @@ Eigen::Matrix2d hessian_function(Eigen::Vector2d x) {
  * equality_constraints
  * h(x) = 0
  */
-Eigen::VectorXd equality_constraint(Eigen::Vector2d x) {
-    Eigen::VectorXd eq_value_vec(1);
+autodiff::VectorXvar equality_constraint(autodiff::Vector2var x) {
+    autodiff::VectorXvar eq_value_vec(1);
     eq_value_vec << x(0) * x(0) + 2 * x(0) - x(1);
     return eq_value_vec;
 }
 
-Eigen::MatrixXd jacbian_eq_constraint(Eigen::Vector2d x) {
+Eigen::MatrixXd jacbian_eq_constraint(autodiff::Vector2var x) {
     /**
      * num_constraint * num_variable
      */
-    Eigen::MatrixXd jacbian_eq(1, 2);
-    jacbian_eq << 2 * x(0) + 2, -1;
-    return jacbian_eq;
+
+    autodiff::VectorXvar y(1);
+    y = equality_constraint(x);
+    return autodiff::jacbian(y,x);
 }
 
 /**
@@ -85,21 +98,23 @@ Eigen::MatrixXd jacbian_eq_constraint(Eigen::Vector2d x) {
  * G(x) <= b
  */
 
-Eigen::VectorXd inequality_constraint(Eigen::Vector2d x) {
-    Eigen::Vector2d G;
+autodiff::VectorXvar inequality_constraint(autodiff::Vector2var x) {
+    autodiff::Vector2var G;
     G << 1.0, -1.0;
-    double b = -1.0;
 
-    Eigen::VectorXd ineq_value_vec(1);
-    ineq_value_vec << G.transpose() * x - b;
+    Eigen::Matrix<double, 1, 1> b;
+    b << -1.0;
+    // double b = 1.0;
+    
+    autodiff::VectorXvar ineq_value_vec(1);
+    ineq_value_vec << G.transpose() * x - b; /// note Eigen::operator and Variable;
     return ineq_value_vec;
 }
 
-Eigen::MatrixXd jacbian_ineq_constraint(Eigen::Vector2d x) {
-    Eigen::Vector2d jacbian_ineq;
-    jacbian_ineq << 1.0, -1.0;
-
-    return jacbian_ineq.transpose();
+Eigen::MatrixXd jacbian_ineq_constraint(autodiff::Vector2var x) {
+    autodiff::VectorXvar y(1);
+    y = inequality_constraint(x);
+    return autodiff::jacbian(y,x);
 }
 
 /**
@@ -117,31 +132,28 @@ Eigen::MatrixXd jacbian_ineq_constraint(Eigen::Vector2d x) {
  * -h(x)<= 0
  */
 
-Eigen::VectorXd eq_ineq_constraints(Eigen::Vector2d x) {
-    Eigen::Vector2d G;
+autodiff::Vector3var eq_ineq_constraints(autodiff::Vector2var x) {
+    autodiff::Vector2var  G;
     G << 1.0, -1.0;
-    double b = -1.0;
-    Eigen::VectorXd ineq_value_vec(3);
+    // double b = 1.0;
+    Eigen::Matrix<double, 1, 1> b;
+    b << -1.0;
 
-    ineq_value_vec << G.dot(x) - b, 
+    autodiff::Vector3var ineq_value_vec(3);
+   
+    ineq_value_vec << G.transpose() * x - b, 
                   x(0) * x(0) + 2 * x(0) - x(1), 
                   -(x(0) * x(0) + 2 * x(0) - x(1));
 
     return ineq_value_vec;
 }
 
-Eigen::MatrixXd jacbian_eq_ineq_constraints(Eigen::Vector2d x) {
-    Eigen::Vector2d G;
-    G << 1.0, -1.0;
-
-    Eigen::MatrixXd jacbian_eq_ineq;
-    jacbian_eq_ineq.setZero(3, 2);
-    jacbian_eq_ineq.row(0) = G.transpose();
-    jacbian_eq_ineq.row(1) = Eigen::Vector2d({2 * x(0) + 2, -1}).transpose();
-    jacbian_eq_ineq.row(2) = -Eigen::Vector2d({2 * x(0) + 2, -1}).transpose();
-
-    return jacbian_eq_ineq;
+Eigen::MatrixXd jacbian_eq_ineq_constraints(autodiff::Vector2var x) {
+    autodiff::VectorXvar y(1);
+    y = eq_ineq_constraints(x);
+    return autodiff::jacbian(y,x);
 }
+
 
 /**
  * GradientDescend,
@@ -160,7 +172,7 @@ void unconstraint_test() {
     opts.max_iternum_ = 1000;
     opts.stop_grad_norm_ = 0.01;
 
-    opts.solvertype_ = OptSolver::UnconstraintSolver::SolverType::ConjugateGradient;
+    opts.solvertype_ = OptSolver::UnconstraintSolver::SolverType::QuasiNewton_BFGS;
     opts.grad_func_ = gradient_function;
     opts.hess_func_ = hessian_function;
     opts.obj_func_ = objective_function;
@@ -171,11 +183,10 @@ void unconstraint_test() {
     solver.Initialize(x0);
     solver.Solve();
 
-    plot_solution_path(solver.get_solution_trajectory(), objective_function,"ConjugateGradient");
+    plot_solution_path(solver.get_solution_trajectory(), objective_function,"QuasiNewton_BFGS");
     plt::pause(1.0);
     plt::clf();
 }
-
 
 
 /**
@@ -193,7 +204,7 @@ void constraint_test_augmented_lagrangian() {
     
     OptSolver::ConstraintSolver::Options opts;
     opts.max_iternum_ = 1000;
-    opts.stop_x_norm_ = 0.01;
+    opts.stop_x_norm_ = 0.001;
 
     opts.solvertype_ = OptSolver::ConstraintSolver::SolverType::AugmentedLagrangian;
     opts.grad_func_ = gradient_function;
@@ -203,8 +214,15 @@ void constraint_test_augmented_lagrangian() {
     opts.cons_func_ = eq_ineq_constraints;
     opts.jac_cons_func_ = jacbian_eq_ineq_constraints;
 
+    // opts.cons_func_ = equality_constraint;
+    // opts.jac_cons_func_ = jacbian_eq_constraint;
+
+    // opts.cons_func_ = inequality_constraint;
+    // opts.jac_cons_func_ = jacbian_ineq_constraint;
+
     OptSolver::ConstraintSolver solver(opts);
     Eigen::Vector2d x0;
+    x0 << 2, -2;
     // x0 << -3, 2;
     // x0 << 3, 3;
     x0 << -1, 4;
@@ -243,12 +261,12 @@ void constraint_test_interior() {
 
     OptSolver::ConstraintSolver solver(opts);
     Eigen::Vector2d x0;
-    // x0 << 2, -2;
+    x0 << 2, -2;
     // x0 << -3, 2;
     // x0 << 3, 3;
-    x0 << -1, 4;
-    // x0 << 0.5, 0.0;
-    // x0 << 1.0, 0.0;
+    // x0 << -1, 4;
+    x0 << -3.0, 0.0;
+    x0 << -1.0, 0.0;
 
     solver.Initialize(x0);
     solver.Solve();
@@ -289,13 +307,14 @@ void constraint_test_kkt_system_solver() {
     plt::clf();
 }
 
-// clang-format on
+
+
 int main() {
-    // unconstraint_test();
+
+    unconstraint_test();
     constraint_test_augmented_lagrangian();
     constraint_test_interior();
     constraint_test_kkt_system_solver();
     plt::show();
-    plt::close();
     return 0;
 }
